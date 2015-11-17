@@ -5,6 +5,7 @@ from splinter import Browser
 import os
 import json
 import re
+import statistics as stats
 
 
 def addRankingToExperts(expertNames, expertsRankings, playerWithRankings):
@@ -12,7 +13,8 @@ def addRankingToExperts(expertNames, expertsRankings, playerWithRankings):
 	i = 3
 	first = playerWithRankings[i].strip()
 	# Skip the injury field if there is one
-	if first == 'Q' or first == 'P' or first == 'D' or first == 'O':
+	injuryTypes = ['P', 'Q', 'D', 'O', 'IR']
+	if first in injuryTypes:
 		i = 5
 	else:
 		i = 4
@@ -36,9 +38,10 @@ def printRankings(expertRankings):
 	for ranking in expertRankings["Avg"]:
 		print(ranking[0] + ": " + str(ranking[1]))
 
-def getWeek10Rankings():
-	browser = Browser('firefox')
-	url = 'http://espn.go.com/fantasy/football/story/_/page/15ranksWeek9QB/fantasy-football-week-9-quarterback-rankings'
+def getExpertRankings(week, browser):
+	
+	url = "http://espn.go.com/fantasy/football/story/_/page/15ranksWeek%sQB/fantasy-football-week-%s-quarterback-rankings" %(week, week)
+
 	browser.visit(url)
 
 	table_data = browser.html
@@ -59,12 +62,11 @@ def getWeek10Rankings():
 		expertsRankings[expert].sort(key= lambda tup: tup[1])
 
 	# printRankings(expertsRankings)
-	browser.quit()
+	# browser.quit()
 	return expertsRankings
 
-def getActualRankings():
-	browser = Browser('firefox')
-	url = 'http://games.espn.go.com/ffl/leaders?&slotCategoryId=0&scoringPeriodId=9&seasonId=2015'
+def getActualRankings(week, browser):
+	url = "http://games.espn.go.com/ffl/leaders?&scoringPeriodId=%s&seasonId=2015&slotCategoryId=0" % week
 	browser.visit(url)
 
 	table_data = browser.html
@@ -81,7 +83,7 @@ def getActualRankings():
 		actualRankings[playerStats[0].strip()] = (j, float(playerStats[-1]))
 		j += 1
 	# print(actualRankings)
-	browser.quit()
+	# browser.quit()
 	return actualRankings
 
 def expertScore(expertRankings, actualRankings):
@@ -97,14 +99,23 @@ def expertScore(expertRankings, actualRankings):
 		currPlayer = expertRankings[i][0]
 		currPlayerExpertRanking = expertRankings[i][1]
 		processed.append(currPlayer)
-		currPlayerActualRanking = actualRankings[currPlayer][0]
-		currPlayerActualPoints = actualRankings[currPlayer][1]
+		if currPlayer in actualRankings.keys():
+			currPlayerActualRanking = actualRankings[currPlayer][0]
+			currPlayerActualPoints = actualRankings[currPlayer][1]
+		else:
+			currPlayerActualRanking = float('inf')
+			currPlayerActualPoints = 0
 		for j in range(i+1, len(expertRankings)):
 			# By nature of the expert rankings being sorted, we know that each player we
 			# are comparing to will have a worse ranking than the current one.
 			comparePlayer = expertRankings[j][0]
-			comparePlayerActualRanking = actualRankings[comparePlayer][0]
-			comparePlayerActualPoints = actualRankings[comparePlayer][1]
+			if comparePlayer in actualRankings.keys():
+				comparePlayerActualRanking = actualRankings[comparePlayer][0]
+				comparePlayerActualPoints = actualRankings[comparePlayer][1]
+			else:
+				# For simplicity, assume worst possible fantasy point total is 0.
+				comparePlayerActualRanking = float('inf')
+				comparePlayerActualPoints = 0
 			# Success
 			if currPlayerActualRanking <= comparePlayerActualRanking:
 				score += abs(currPlayerActualPoints - comparePlayerActualPoints)**2
@@ -114,19 +125,35 @@ def expertScore(expertRankings, actualRankings):
 	return score/100.0
 
 def getScoresForExperts(expertsRankings, actualRankings):
-
 	scores = []
 	for expert in expertsRankings.keys():
 		score = expertScore(expertsRankings[expert], actualRankings)
 		scores.append((expert, score))
 	return scores
 
+def updateEspnExpertScores(week, browser, scores):
+	expertsRankings = getExpertRankings(week, browser)
+	actualRankings = getActualRankings(week, browser)
+	weekScores = getScoresForExperts(expertsRankings, actualRankings)
+	for tup in weekScores:
+		scores[tup[0]].append(tup[1])
+
+
 def main():
-	expertsRankings = getWeek10Rankings()
-	actualRankings = getActualRankings()
-	scores = getScoresForExperts(expertsRankings, actualRankings)
-	for tup in scores:
-		print(tup[0] + " : " + str(tup[1]))
+	browser = Browser('firefox')
+	scores = {}
+	for expert in ["Berry", "Karabell", "Yates", "Cockroft", "Clay", "Avg"]:
+		scores[expert] = []
+	for i in range(1,9):
+		print("Calculating ESPN expert scores for Week %s" %i)
+		updateEspnExpertScores(i, browser, scores)
+	finalScores = []
+	for expert in scores.keys():
+		expertScoreMean = stats.mean(scores[expert])
+		finalScores.append((expert, expertScoreMean))
+	print("Final Average Scores for Each Expert:")
+	for final in finalScores:
+		print(final[0] + " : " + str(final[1]))
 
 main()
 
