@@ -1,8 +1,13 @@
 TODO:
 
 Set maximum number of rankings to be considered by position (e.g. 25 quarterbacks)
+	- research other fantasy prediction sites, go with minimum.
 
 Handle players who were ranked by experts but did not make the top scores, and vice versa.
 
-Potentially: Change 'score' metric to 'error' metric, and just reward incorrect predictions with a score of 0.
+(Low Priority) -- Potentially: Change 'score' metric to 'error' metric, and just reward incorrect predictions with a score of 0.
+
+Save stuff in CSV's
+
+Do scores for all positions, not just QB's.
 

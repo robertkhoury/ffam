@@ -145,7 +145,7 @@ def main():
 	scores = {}
 	for expert in ["Berry", "Karabell", "Yates", "Cockroft", "Clay", "Avg"]:
 		scores[expert] = []
-	for i in range(1,11):
+	for i in range(5,6):
 		print("Calculating ESPN expert scores for Week %s" %i)
 		updateEspnExpertScores(i, browser, scores)
 	finalScores = []
