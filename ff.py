@@ -89,6 +89,7 @@ def getActualRankings(week, browser):
 def expertScore(expertRankings, actualRankings):
 	# expertRankings: (player name, ranking)
 	# actualRankings: (player name -> (position rank, fantasy points))
+
 	# print("expert rankings")
 	# print(expertRankings)
 	# print("actual rankings: ")
@@ -144,7 +145,7 @@ def main():
 	scores = {}
 	for expert in ["Berry", "Karabell", "Yates", "Cockroft", "Clay", "Avg"]:
 		scores[expert] = []
-	for i in range(1,9):
+	for i in range(1,11):
 		print("Calculating ESPN expert scores for Week %s" %i)
 		updateEspnExpertScores(i, browser, scores)
 	finalScores = []
@@ -154,6 +155,7 @@ def main():
 	print("Final Average Scores for Each Expert:")
 	for final in finalScores:
 		print(final[0] + " : " + str(final[1]))
+	browser.quit()
 
 main()
 
