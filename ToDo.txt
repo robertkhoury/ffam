@@ -1,0 +1,8 @@
+TODO:
+
+Set maximum number of rankings to be considered by position (e.g. 25 quarterbacks)
+
+Handle players who were ranked by experts but did not make the top scores, and vice versa.
+
+Potentially: Change 'score' metric to 'error' metric, and just reward incorrect predictions with a score of 0.
+
